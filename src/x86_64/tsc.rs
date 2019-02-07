@@ -1,5 +1,5 @@
-use arch::time::rtc;
-use time::ONE_GHZ_IN_HZ;
+use super::rtc;
+use crate::ONE_GHZ_IN_HZ;
 
 lazy_static! {
     /// TSC Frequency in Hz

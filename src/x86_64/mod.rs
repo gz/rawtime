@@ -1,7 +1,7 @@
 mod rtc;
 pub mod tsc;
 
-use time::DateTime;
+use crate::DateTime;
 
 pub fn wallclock() -> DateTime {
     unsafe { rtc::now() }

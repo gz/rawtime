@@ -1,6 +1,6 @@
 use x86::io::{inb, outb};
 
-use time::DateTime;
+use crate::DateTime;
 
 const RTC_COMMAND: u16 = 0x70;
 const RTC_DATA: u16 = 0x71;

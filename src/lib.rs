@@ -4,7 +4,7 @@
 extern crate x86;
 
 #[allow(unused_imports)]
-#[macro_use(debug)]
+#[macro_use(info, debug)]
 extern crate log;
 
 #[cfg(test)]
@@ -205,8 +205,7 @@ fn wait_one_sec() {
 
     let time1 = duration_since_boot();
     let now = Instant::now();
-    while now.elapsed().as_secs() < 1 {
-    }
+    while now.elapsed().as_secs() < 1 {}
     let time2 = duration_since_boot();
 
     let range: core::ops::Range<u128> = 999..1100;

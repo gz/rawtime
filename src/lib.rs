@@ -142,9 +142,14 @@ impl Instant {
         Instant(precise_time_ns() as u128)
     }
 
+    pub fn from_nanos(ns: u128) -> Instant {
+        Instant(ns)
+    }
+
     pub fn duration_since(&self, earlier: Instant) -> Duration {
         if earlier > *self {
-            panic!("Second instance is later than self");
+            error!("Second instance is later than self");
+            Duration::from_nanos(0 as u64)
         } else {
             Duration::from_nanos((self.0 - earlier.0) as u64)
         }

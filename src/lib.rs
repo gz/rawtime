@@ -147,6 +147,10 @@ impl Instant {
         Instant(ns)
     }
 
+    pub fn as_nanos(&self) -> u128 {
+        self.0
+    }
+
     pub fn duration_since(&self, earlier: Instant) -> Duration {
         if earlier > *self {
             error!("Second instance is later than self");

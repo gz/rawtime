@@ -21,6 +21,10 @@ pub use core::time::Duration;
 #[path = "x86_64/mod.rs"]
 pub mod arch;
 
+#[cfg(all(target_arch = "x86_64", target_os = "bespin"))]
+#[path = "bespin/mod.rs"]
+pub mod arch;
+
 #[cfg(all(target_arch = "x86_64", target_family = "unix"))]
 #[path = "unix/mod.rs"]
 pub mod arch;

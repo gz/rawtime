@@ -157,7 +157,7 @@ impl Instant {
 
     pub fn duration_since(&self, earlier: Instant) -> Duration {
         if earlier > *self {
-            error!("Second instance is later than self");
+            //error!("Second instance is later than self");
             Duration::from_nanos(0 as u64)
         } else {
             Duration::from_nanos((self.0 - earlier.0) as u64)

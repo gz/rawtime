@@ -30,7 +30,6 @@ pub mod arch;
 pub mod arch;
 
 use arch::{precise_time_ns, wallclock};
-use log::error;
 
 pub const ONE_GHZ_IN_HZ: u64 = 1_000_000_000;
 

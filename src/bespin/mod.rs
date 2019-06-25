@@ -1,5 +1,4 @@
 use crate::DateTime;
-use libc;
 
 pub mod tsc {
     use crate::ONE_GHZ_IN_HZ;
@@ -41,15 +40,13 @@ pub mod tsc {
 }
 
 pub fn wallclock() -> DateTime {
-    unsafe {
-        DateTime {
-            sec: 1 as u8,
-            min: 1 as u8,
-            day: 1 as u8,
-            hour: 1 as u8,
-            mon: 1 as u8,
-            year: 1900 as u64,
-        }
+    DateTime {
+        sec: 1 as u8,
+        min: 1 as u8,
+        day: 1 as u8,
+        hour: 1 as u8,
+        mon: 1 as u8,
+        year: 1900 as u64,
     }
 }
 

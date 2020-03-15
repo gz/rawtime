@@ -25,6 +25,10 @@ pub mod arch;
 #[path = "bespin/mod.rs"]
 pub mod arch;
 
+#[cfg(all(target_arch = "x86_64", target_os = "redleaf"))]
+#[path = "redleaf/mod.rs"]
+pub mod arch;
+
 #[cfg(all(target_arch = "x86_64", target_family = "unix"))]
 #[path = "unix/mod.rs"]
 pub mod arch;

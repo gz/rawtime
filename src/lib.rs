@@ -1,5 +1,4 @@
 #![no_std]
-#![cfg_attr(test, feature(range_contains))]
 
 extern crate x86;
 

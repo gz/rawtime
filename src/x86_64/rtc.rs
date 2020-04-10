@@ -12,7 +12,7 @@ const RTC_DAY: u8 = 0x07;
 const RTC_MONTH: u8 = 0x08;
 const RTC_YEAR: u8 = 0x09;
 const RTC_STATUS_A: u8 = 0x0a;
-const RTC_UIP: u8 = (1 << 7);
+const RTC_UIP: u8 = 1 << 7;
 
 fn bcd_to_bin(bcd: u8) -> u8 {
     ((bcd >> 4) & 0x0f) * 10 + (bcd & 0x0f)

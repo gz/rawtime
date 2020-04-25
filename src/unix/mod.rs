@@ -12,11 +12,11 @@ pub mod tsc {
                 .get_feature_info()
                 .map_or(false, |finfo| finfo.has_tsc());
             assert!(has_tsc);
-            
+
             let tsc_frequency = cpuid
                 .get_tsc_info()
                 .map_or(0, |tinfo| tinfo.tsc_frequency());
-            
+
             if tsc_frequency != 0 {
                 tsc_frequency
             }
@@ -25,7 +25,7 @@ pub mod tsc {
                     .get_processor_frequency_info()
                     .map_or(3*ONE_GHZ_IN_HZ, |pinfo| pinfo.processor_max_frequency() as u64 * 1000000) as u64
             }
-            
+
         };
     }
 

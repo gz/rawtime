@@ -18,34 +18,38 @@ pub mod tsc {
                 .get_extended_function_info()
                 .map_or(false, |efinfo| efinfo.has_invariant_tsc());
             assert!(has_invariant_tsc, "Hardware not supported (lacks invariant tsc)");
+            assert!(has_tsc, "TSC not available");
 
-            let tsc_frequency_hz = cpuid.get_tsc_info().map(|tinfo| {
-                if tinfo.nominal_frequency() != 0 {
-                    Some(tinfo.tsc_frequency())
-                } else if tinfo.numerator() != 0 && tinfo.denominator() != 0 {
-                    // Skylake and Kabylake don't report the crystal clock, approximate with base frequency:
-                    cpuid
-                        .get_processor_frequency_info()
-                        .map(|pinfo| pinfo.processor_base_frequency() as u64 * MHZ_TO_HZ)
-                        .map(|cpu_base_freq_hz| {
-                            let crystal_hz =
-                                cpu_base_freq_hz * tinfo.denominator() as u64 / tinfo.numerator() as u64;
-                            crystal_hz * tinfo.numerator() as u64 / tinfo.denominator() as u64
-                        })
-                } else {
-                    None
+            // Determine frequency from CPUID:
+            let mut tsc_frequency_hz = cpuid.get_tsc_info().and_then(|tinfo| {
+                match tinfo.tsc_frequency() {
+                    None => {
+                        if tinfo.numerator() != 0 && tinfo.denominator() != 0 {
+                            cpuid
+                            .get_processor_frequency_info()
+                            .and_then(|pinfo| Some(pinfo.processor_base_frequency() as u64 * MHZ_TO_HZ))
+                            .and_then(|cpu_base_freq_hz| {
+                                let crystal_hz =
+                                    cpu_base_freq_hz * tinfo.denominator() as u64 / tinfo.numerator() as u64;
+                                Some(crystal_hz * tinfo.numerator() as u64 / tinfo.denominator() as u64)
+                            })
+                        }
+                        else {
+                            None
+                        }
+                    }
+                    frequency => frequency,
                 }
             });
 
-            tsc_frequency_hz.unwrap_or_else(|| {
-                // Maybe we run in a VM and the hypervisor can give us the TSC frequency
-                cpuid.get_hypervisor_info().map(|hv| {
-                    hv.tsc_frequency().map(|tsc_khz| {
-                        tsc_khz as u64 * KHZ_TO_HZ
-                    })
+            // Override with info from hypervisor if available:
+            tsc_frequency_hz = cpuid.get_hypervisor_info().and_then(|hv| {
+                hv.tsc_frequency().and_then(|tsc_khz| {
+                    Some(tsc_khz as u64 * KHZ_TO_HZ)
                 })
-                .unwrap_or_else(|| panic!("Couldn't determine the TSC frequency"))
-            }).unwrap_or_else(|| panic!("Couldn't determine the TSC frequency"))
+            });
+
+            tsc_frequency_hz.expect("Couldn't determine TSC frequency")
         };
     }
 

@@ -4,30 +4,51 @@ use crate::ONE_GHZ_IN_HZ;
 lazy_static! {
     /// TSC Frequency in Hz
     pub static ref TSC_FREQUENCY: u64 = {
+        const MHZ_TO_HZ: u64 = 1000000;
+        const KHZ_TO_HZ: u64 = 1000;
+
         let cpuid = x86::cpuid::CpuId::new();
         let has_tsc = cpuid
             .get_feature_info()
             .map_or(false, |finfo| finfo.has_tsc());
-        assert!(has_tsc);
-        let _has_invariant_tsc = cpuid
+        let has_invariant_tsc = cpuid
             .get_extended_function_info()
             .map_or(false, |efinfo| efinfo.has_invariant_tsc());
+        assert!(has_tsc, "TSC not available");
+        assert!(has_invariant_tsc, "Hardware not supported (lacks invariant tsc)");
 
-        if cpuid.get_tsc_info().is_some() {
-            return cpuid
-                .get_tsc_info()
-                .map_or(3*ONE_GHZ_IN_HZ, |tinfo| tinfo.tsc_frequency());
-        } else if cpuid.get_hypervisor_info().is_some() {
-            let hv = cpuid.get_hypervisor_info().unwrap();
-            return hv.tsc_frequency()
-                .map_or(3*ONE_GHZ_IN_HZ, |tsc_khz| tsc_khz as u64 * 1000);
-        } else if cpuid.get_processor_frequency_info().is_some() {
-            return cpuid
-                .get_processor_frequency_info()
-                .map_or(3*ONE_GHZ_IN_HZ, |pinfo| pinfo.processor_max_frequency() as u64 * 1000000);
-        } else {
-            unsafe {
-                debug!("{:?}", x86::cpuid::cpuid!(0x15, 0x0));
+        // Determine frequency from CPUID:
+        let mut tsc_frequency_hz = cpuid.get_tsc_info().and_then(|tinfo| {
+            match tinfo.tsc_frequency() {
+                None => {
+                    if tinfo.numerator() != 0 && tinfo.denominator() != 0 {
+                        cpuid
+                        .get_processor_frequency_info()
+                        .and_then(|pinfo| Some(pinfo.processor_base_frequency() as u64 * MHZ_TO_HZ))
+                        .and_then(|cpu_base_freq_hz| {
+                            let crystal_hz =
+                                cpu_base_freq_hz * tinfo.denominator() as u64 / tinfo.numerator() as u64;
+                            Some(crystal_hz * tinfo.numerator() as u64 / tinfo.denominator() as u64)
+                        })
+                    }
+                    else {
+                        None
+                    }
+                }
+                frequency => frequency,
+            }
+        });
+
+        // Override with info from hypervisor if available:
+        tsc_frequency_hz = cpuid.get_hypervisor_info().and_then(|hv| {
+            hv.tsc_frequency().and_then(|tsc_khz| {
+                Some(tsc_khz as u64 * KHZ_TO_HZ)
+            })
+        });
+
+        // If we still couldn't figure it out, use RTC and measure it:
+        if tsc_frequency_hz.is_none()  {
+            unsafe  {
                 let rtc = rtc::now();
                 while rtc::now().as_unix_time() < (rtc.as_unix_time() + 1) {
                     core::arch::x86_64::_mm_pause();
@@ -39,11 +60,14 @@ lazy_static! {
                     core::arch::x86_64::_mm_pause();
                 }
                 let cycles_per_sec = x86::time::rdtsc() - start;
-                info!("Estimated TSC rate is {} cycles per second.", cycles_per_sec);
-                cycles_per_sec
+
+                tsc_frequency_hz = Some(cycles_per_sec);
             }
         }
+
+        tsc_frequency_hz.unwrap_or_else(|| MHZ_TO_HZ*3000)
     };
+
 }
 
 #[inline]

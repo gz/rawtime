@@ -15,7 +15,7 @@ pub mod tsc {
 
             let tsc_frequency = cpuid
                 .get_tsc_info()
-                .map_or(0, |tinfo| tinfo.tsc_frequency().unwrap());
+                .map_or(0, |tinfo| tinfo.tsc_frequency().unwrap_or(0));
 
             if tsc_frequency != 0 {
                 tsc_frequency

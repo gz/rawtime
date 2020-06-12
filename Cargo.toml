@@ -9,7 +9,7 @@ keywords = ["no_std", "x86", "time"]
 
 [dependencies]
 lazy_static = { version = "1.3", features = ["spin_no_std"] }
-x86 = "0.33"
+x86 = "0.34"
 log = "0.4.6"
 
 [target.'cfg(not(target_os = "none"))'.dependencies]

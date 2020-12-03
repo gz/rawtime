@@ -43,11 +43,13 @@ pub mod tsc {
             });
 
             // Override with info from hypervisor if available:
-            tsc_frequency_hz = cpuid.get_hypervisor_info().and_then(|hv| {
-                hv.tsc_frequency().and_then(|tsc_khz| {
-                    Some(tsc_khz as u64 * KHZ_TO_HZ)
-                })
+            let tsc_frequency_hz_vm = cpuid.get_hypervisor_info().and_then(|hv| {
+                hv.tsc_frequency()
+                    .and_then(|tsc_khz| Some(tsc_khz as u64 * KHZ_TO_HZ))
             });
+            if tsc_frequency_hz_vm.is_some() {
+                tsc_frequency_hz = tsc_frequency_hz_vm;
+            }
 
             tsc_frequency_hz.expect("Couldn't determine TSC frequency")
         };

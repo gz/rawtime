@@ -8,9 +8,9 @@ description = "Basic timing infrastructure for no_std (currently x86 only) platf
 keywords = ["no_std", "x86", "time"]
 
 [dependencies]
-lazy_static = { version = "1.3", features = ["spin_no_std"] }
-x86 = "0.34"
-log = "0.4.6"
+lazy_static = { version = "1.4", features = ["spin_no_std"] }
+x86 = "0.37"
+log = "0.4"
 
 [target.'cfg(not(target_os = "none"))'.dependencies]
 libc = "0.2"

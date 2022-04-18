@@ -1,57 +1,45 @@
 use crate::DateTime;
 
+fn determine_cpu_frequency() -> u64 {
+    const MHZ_TO_HZ: u64 = 1000000;
+    const KHZ_TO_HZ: u64 = 1000;
+    let cpuid = x86::cpuid::CpuId::new();
+
+    // Use info from hypervisor if available:
+    if let Some(hv) = cpuid.get_hypervisor_info() {
+        if let Some(tsc_khz) = hv.tsc_frequency() {
+            return tsc_khz as u64 * KHZ_TO_HZ;
+        }
+    }
+
+    // Use CpuId info if available:
+    if let Some(tinfo) = cpuid.get_tsc_info() {
+        if let Some(freq) = tinfo.tsc_frequency() {
+            return freq;
+        }
+        else {
+            if tinfo.numerator() != 0 && tinfo.denominator() != 0 {
+                // Approximate with the processor frequency:
+                if let Some(pinfo) = cpuid.get_processor_frequency_info() {
+                    let cpu_base_freq_hz = pinfo.processor_base_frequency() as u64 * MHZ_TO_HZ;
+                    let crystal_hz =
+                        cpu_base_freq_hz * tinfo.denominator() as u64 / tinfo.numerator() as u64;
+                    return crystal_hz * tinfo.numerator() as u64 / tinfo.denominator() as u64;
+                }
+            }
+        }
+    }
+
+    3000 * MHZ_TO_HZ
+}
+
 pub mod tsc {
     use crate::ONE_GHZ_IN_HZ;
 
     lazy_static! {
         /// TSC Frequency in Hz
         pub static ref TSC_FREQUENCY: u64 = {
-            const MHZ_TO_HZ: u64 = 1000000;
-            const KHZ_TO_HZ: u64 = 1000;
-
-            let cpuid = x86::cpuid::CpuId::new();
-            let has_tsc = cpuid
-                .get_feature_info()
-                .map_or(false, |finfo| finfo.has_tsc());
-
-            let has_invariant_tsc = cpuid
-                .get_extended_function_info()
-                .map_or(false, |efinfo| efinfo.has_invariant_tsc());
-            assert!(has_invariant_tsc, "Hardware not supported (lacks invariant tsc)");
-            assert!(has_tsc, "TSC not available");
-
-            // Determine frequency from CPUID:
-            let mut tsc_frequency_hz = cpuid.get_tsc_info().and_then(|tinfo| {
-                match tinfo.tsc_frequency() {
-                    None => {
-                        if tinfo.numerator() != 0 && tinfo.denominator() != 0 {
-                            cpuid
-                            .get_processor_frequency_info()
-                            .and_then(|pinfo| Some(pinfo.processor_base_frequency() as u64 * MHZ_TO_HZ))
-                            .and_then(|cpu_base_freq_hz| {
-                                let crystal_hz =
-                                    cpu_base_freq_hz * tinfo.denominator() as u64 / tinfo.numerator() as u64;
-                                Some(crystal_hz * tinfo.numerator() as u64 / tinfo.denominator() as u64)
-                            })
-                        }
-                        else {
-                            None
-                        }
-                    }
-                    frequency => frequency,
-                }
-            });
-
-            // Override with info from hypervisor if available:
-            let tsc_frequency_hz_vm = cpuid.get_hypervisor_info().and_then(|hv| {
-                hv.tsc_frequency()
-                    .and_then(|tsc_khz| Some(tsc_khz as u64 * KHZ_TO_HZ))
-            });
-            if tsc_frequency_hz_vm.is_some() {
-                tsc_frequency_hz = tsc_frequency_hz_vm;
-            }
-
-            tsc_frequency_hz.expect("Couldn't determine TSC frequency")
+            super::determine_cpu_frequency()
         };
     }
 

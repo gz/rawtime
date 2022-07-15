@@ -17,8 +17,7 @@ fn determine_cpu_frequency() -> u64 {
     if let Some(tinfo) = cpuid.get_tsc_info() {
         if let Some(freq) = tinfo.tsc_frequency() {
             return freq;
-        }
-        else {
+        } else {
             if tinfo.numerator() != 0 && tinfo.denominator() != 0 {
                 // Approximate with the processor frequency:
                 if let Some(pinfo) = cpuid.get_processor_frequency_info() {
@@ -32,7 +31,7 @@ fn determine_cpu_frequency() -> u64 {
     }
 
     // If we still couldn't figure it out, use RTC and measure it:
-    unsafe  {
+    unsafe {
         let rtc = rtc::now();
         while rtc::now().as_unix_time() < (rtc.as_unix_time() + 1) {
             core::arch::x86_64::_mm_pause();
@@ -57,7 +56,7 @@ lazy_static! {
         let has_tsc = cpuid
             .get_feature_info()
             .map_or(false, |finfo| finfo.has_tsc());
-        let has_invariant_tsc = cpuid 
+        let has_invariant_tsc = cpuid
             .get_advanced_power_mgmt_info()
             .map_or(false, |efinfo| efinfo.has_invariant_tsc());
         assert!(has_tsc, "TSC not available");

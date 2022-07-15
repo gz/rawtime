@@ -16,8 +16,7 @@ fn determine_cpu_frequency() -> u64 {
     if let Some(tinfo) = cpuid.get_tsc_info() {
         if let Some(freq) = tinfo.tsc_frequency() {
             return freq;
-        }
-        else {
+        } else {
             if tinfo.numerator() != 0 && tinfo.denominator() != 0 {
                 // Approximate with the processor frequency:
                 if let Some(pinfo) = cpuid.get_processor_frequency_info() {

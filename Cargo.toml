@@ -1,6 +1,6 @@
 [package]
 name = "rawtime"
-version = "0.0.9"
+version = "0.0.10"
 authors = ["Gerd Zellweger <mail@gerdzellweger.com>"]
 edition = "2018"
 license = "Apache-2.0/MIT"
@@ -9,7 +9,7 @@ keywords = ["no_std", "x86", "time"]
 
 [dependencies]
 lazy_static = { version = "1.4", features = ["spin_no_std"] }
-x86 = { version = "0.51", features = ["unstable"] }
+x86 = { version = "0.52", features = ["unstable"] }
 log = "0.4"
 
 [target.'cfg(not(target_os = "none"))'.dependencies]
